@@ -5,9 +5,7 @@ import java.util.Scanner;
 
 public class Assignment2 {
     public static void main(String[] args) {
-
         Scanner sc = new Scanner(System.in);
-
 
         Account a1 = new Account(1, 600000);
         Account a2 = new Account(2, 150000);
