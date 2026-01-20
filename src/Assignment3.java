@@ -2,10 +2,47 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.*;
 
-public class Assignment2 {
-    public static void main(String[] args) {
+public class Assignment3 {
+    public static void main(String[] args) throws SQLException {
         Scanner sc = new Scanner(System.in);
+
+
+        try (Connection c = DBConnection.getConnection()) {
+            System.out.println("PSQL Connected.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        try (Connection c = DBConnection.getConnection()) {
+            String insertAcc = "INSERT INTO account(balance) VALUES (1000) RETURNING id";
+            PreparedStatement psAcc = c.prepareStatement(insertAcc);
+            ResultSet rsAcc = psAcc.executeQuery();
+            rsAcc.next();
+            int accId = rsAcc.getInt("id");
+
+
+            String insertCust = "INSERT INTO customer(name, email, account_id) VALUES (?, ?, ?)";
+            PreparedStatement psCust = c.prepareStatement(insertCust);
+            psCust.setString(1, "Adilkhan");
+            psCust.setString(2, "adik@mail.com");
+            psCust.setInt(3, accId);
+            psCust.executeUpdate();
+
+
+            String read = "SELECT c.name, c.email, a.balance " + "FROM customer c JOIN account a ON c.account_id = a.id";
+            Statement st = c.createStatement();
+            ResultSet rs = st.executeQuery(read);
+
+            while (rs.next()) {
+                System.out.println(
+                        rs.getString("name") + " | " + rs.getString("email") + " | " + rs.getDouble("balance")
+                );
+            }
+        }
 
         Account a1 = new Account(1, 600000);
         Account a2 = new Account(2, 150000);
@@ -15,23 +52,10 @@ public class Assignment2 {
         Customer c2 = new Customer("Danik", "d@mail.com", a2);
         Customer c3 = new Customer("Birzhik", "i@mail.com", a3);
 
-        System.out.println("Enter name:");
-        String name = sc.nextLine();
-        System.out.println("Enter email:");
-        String email = sc.nextLine();
-        System.out.println("Enter id:");
-        int id = sc.nextInt();
-        System.out.println("Enter balance:");
-        double balance = sc.nextDouble();
-
-        Account newAccount = new Account(id, balance);
-        Customer newCustomer = new Customer(name, email, newAccount);
-
         Bank bank = new Bank("Kaspi");
         bank.addCustomer(c1);
         bank.addCustomer(c2);
         bank.addCustomer(c3);
-        bank.addCustomer(newCustomer);
 
         System.out.println("Filter Balance >= 300,000");
         for (Customer c : bank.filterByMinBalance(300000)) {
@@ -46,8 +70,11 @@ public class Assignment2 {
         bank.sortByBalanceDesc();
         System.out.println(bank.getCustomers());
 
+        }
+
+
     }
-}
+
     interface Transactional {
         void deposit(double amount);
         void withdraw(double amount);
@@ -129,9 +156,10 @@ public class Assignment2 {
             if (this == o) {
                 return true;
             }
-            if ( o == null || getClass() != o.getClass()){
+            if (null == o || getClass() != o.getClass()) {
                 return false;
             }
+
             Customer customer = (Customer) o;
             return email.equals(customer.email);
         }
